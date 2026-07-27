@@ -16,19 +16,38 @@ export async function parseQuestionsWithAI(text: string): Promise<{ questions: D
 
   const rawQuestions = json.questoes || [];
 
-  const questions = rawQuestions.map((q: any, idx: number) => ({
-    id: `draft-ai-${Date.now()}-${idx}`,
-    stem: q.enunciado || 'Enunciado não identificado',
-    options: (q.alternativas || []).map((alt: any) => ({
-      label: (alt.letra || 'A').toUpperCase() as OptionLabel,
-      text: alt.texto || '',
-    })),
-    correctAnswer: '' as OptionLabel, // Gabarito Pendente initially
-    explanation: '', // Free writing space for user
-    difficulty: (['Fácil', 'Médio', 'Difícil'].includes(q.dificuldade) ? q.dificuldade : 'Médio') as any,
-    tags: q.tag && q.tag.trim() ? [q.tag.trim()] : [],
-    isCustomAiSolved: false,
-  }));
+  const questions = rawQuestions.map((q: any, idx: number) => {
+    const rawLabel = (q.numero_original ? `Questão ${q.numero_original}` : '');
+    let cleanStem = (q.enunciado || 'Enunciado não identificado').trim();
+    // Clean leading question numbers e.g. "42 Um hospital..." or "Questão 42 -"
+    cleanStem = cleanStem.replace(/^(?:quest[ãa]o\s+|q\.\s*)?0*\d{1,3}\s*[\.\)\-–:]?\s+/i, '').trim();
+    
+    const formattedOptions = (q.alternativas || []).map((alt: any, optIdx: number) => {
+      const labelChar = (alt.letra || ['A','B','C','D','E'][optIdx] || 'A')
+        .toUpperCase()
+        .replace(/[^A-E]/g, '') || ['A','B','C','D','E'][optIdx] || 'A';
+      
+      let cleanText = (alt.texto || '').trim();
+      // Remove repetitive leading prefixes like "(A)", "A)", "A." or "A - "
+      cleanText = cleanText.replace(/^\(?[A-Ea-e]\)?[\.\)\-–:]\s*/, '').trim();
+
+      return {
+        label: labelChar as OptionLabel,
+        text: cleanText,
+      };
+    });
+
+    return {
+      id: `draft-ai-${Date.now()}-${idx}`,
+      stem: cleanStem,
+      options: formattedOptions,
+      correctAnswer: '' as OptionLabel, // Gabarito Pendente initially
+      explanation: '', // Free writing space for user
+      difficulty: (['Fácil', 'Médio', 'Difícil'].includes(q.dificuldade) ? q.dificuldade : 'Médio') as any,
+      tags: q.tag && q.tag.trim() ? [q.tag.trim()] : (rawLabel ? [rawLabel] : []),
+      isCustomAiSolved: false,
+    };
+  });
 
   return {
     questions,

@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 
 // Read configuration from environment variables or local firebase-applet-config.json if available
 let appletConfig: Record<string, string> = {};
@@ -28,3 +28,13 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
 export const db = getFirestore(app, databaseId);
+
+// Enable offline persistence for Firestore
+enableIndexedDbPersistence(db).catch((err) => {
+  if (err.code === 'failed-precondition') {
+    console.warn('Firestore persistence failed-precondition: múltiplas abas abertas.');
+  } else if (err.code === 'unimplemented') {
+    console.warn('Firestore persistence não é suportada por este navegador.');
+  }
+});
+

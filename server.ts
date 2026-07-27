@@ -101,30 +101,12 @@ app.post("/api/ai/parse-questions", async (req, res) => {
 
     const ai = getGeminiClient();
 
-    const systemInstruction = `Você é um motor especializado de estruturação de provas e questões de concursos, exames e faculdade.
-
-O usuário colará um texto extenso, por vezes contendo várias questões completas com textos de apoio longos, tabelas descritas em texto, citações e alternativas.
-
-SUAS TAREFAS CRÍTICAS:
-1. Identifique e separe CADA questão individual do texto.
-2. Para cada questão, mantenha O ENUNCIADO COMPLETO, incluindo textos de apoio, contexto, comandos e tabelas. NUNCA resuma ou corte o enunciado.
-3. Mantenha TODAS as alternativas de cada questão (A, B, C, D, E) com seus textos originais íntegros.
-4. Identifique "tag" (banca, ano, disciplina ou tema se houver no texto, senão "") e "dificuldade" ("Fácil", "Médio" ou "Difícil").
-5. Realize uma AUTOREVISÃO ao final: se identificar que algum trecho relevante do texto original não foi atribuído a nenhuma questão ou se uma alternativa parece incompleta, preencha "reviewNote" alertando o usuário.
-
-FORMATO DE SAÍDA (JSON estrito):
-{
-  "questoes": [
-    {
-      "tag": "string",
-      "dificuldade": "Fácil" | "Médio" | "Difícil",
-      "enunciado": "string",
-      "alternativas": [{ "letra": "A", "texto": "string" }],
-      "reviewNote": "string"
-    }
-  ],
-  "reviewNotes": "string"
-}`;
+    const systemInstruction = `Você é um motor de estruturação de questões. O texto do usuário pode conter MÚLTIPLAS questões numeradas seguidas (ex: "42 [pergunta]... 43 [pergunta]..."). Você deve:
+1. Identificar CADA número de questão como o início de uma nova questão separada (ex: "42 ", "Questão 42", "42.", "43 ").
+2. Para cada questão, separar claramente o ENUNCIADO (todo o texto até a primeira alternativa "(A)" ou "A)") das ALTERNATIVAS (cada uma das letras A a E, com seu texto respectivo, sem incluir a letra repetida dentro do texto). Atenção: as alternativas podem estar dispostas em linhas separadas OU em texto corrido na mesma linha (ex: "(A) texto (B) texto (C) texto...").
+3. Nunca misturar o enunciado de uma questão com alternativas de outra ou com a questão seguinte.
+4. Para a letra da alternativa, retorne apenas a letra maiúscula pura ("A", "B", "C", "D", "E"). No texto da alternativa, remova qualquer prefixo como "(A)", "A)", "A." ou similares.
+5. Retornar um JSON estrito conforme o schema abaixo contendo o array "questoes".`;
 
     const prompt = `TEXTO BRUTO PARA ESTRUTURAÇÃO:\n"""\n${text}\n"""`;
 
@@ -142,8 +124,7 @@ FORMATO DE SAÍDA (JSON estrito):
               items: {
                 type: Type.OBJECT,
                 properties: {
-                  tag: { type: Type.STRING },
-                  dificuldade: { type: Type.STRING },
+                  numero_original: { type: Type.STRING },
                   enunciado: { type: Type.STRING },
                   alternativas: {
                     type: Type.ARRAY,
@@ -156,7 +137,8 @@ FORMATO DE SAÍDA (JSON estrito):
                       required: ["letra", "texto"],
                     },
                   },
-                  reviewNote: { type: Type.STRING },
+                  tag: { type: Type.STRING },
+                  dificuldade: { type: Type.STRING },
                 },
                 required: ["enunciado", "alternativas"],
               },

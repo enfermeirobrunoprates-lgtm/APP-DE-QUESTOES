@@ -154,6 +154,15 @@ export async function syncUserDataToFirestoreIfNew(uid: string): Promise<void> {
         await txF.objectStore('folders').put(f);
       }
       await txF.done;
+
+      const flagSnap = await getDocs(collection(firestoreDb, 'users', uid, 'flags'));
+      const flags: QuestionFlag[] = [];
+      flagSnap.forEach((d) => flags.push(d.data() as QuestionFlag));
+      const txFlag = localDb.transaction(['flags'], 'readwrite');
+      for (const fl of flags) {
+        await txFlag.objectStore('flags').put(fl);
+      }
+      await txFlag.done;
     }
   } catch (err) {
     console.error('Erro na sincronização Firestore:', err);
