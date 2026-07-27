@@ -1,0 +1,70 @@
+{
+  "entities": {
+    "users": {
+      "title": "User",
+      "description": "User profile information",
+      "properties": {
+        "email": { "type": "string", "description": "Email address" },
+        "displayName": { "type": "string", "description": "Display name" },
+        "createdAt": { "type": "string", "description": "ISO creation date" }
+      },
+      "subcollections": {
+        "modules": {
+          "title": "Module",
+          "description": "Study module / caderno",
+          "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "category": { "type": "string" },
+            "questionCount": { "type": "number" },
+            "folderId": { "type": "string" },
+            "createdAt": { "type": "string" },
+            "updatedAt": { "type": "string" }
+          }
+        },
+        "questions": {
+          "title": "Question",
+          "description": "Question item",
+          "properties": {
+            "moduleId": { "type": "string" },
+            "statement": { "type": "string" },
+            "options": { "type": "array" },
+            "correctAnswer": { "type": "string" },
+            "explanation": { "type": "string" },
+            "mindMap": { "type": "object" },
+            "difficulty": { "type": "string" },
+            "tags": { "type": "array" },
+            "createdAt": { "type": "string" }
+          }
+        },
+        "folders": {
+          "title": "Folder",
+          "description": "Folder container for modules",
+          "properties": {
+            "name": { "type": "string" },
+            "color": { "type": "string" },
+            "createdAt": { "type": "string" }
+          }
+        },
+        "answers": {
+          "title": "UserAnswer",
+          "description": "History of user answers",
+          "properties": {
+            "questionId": { "type": "string" },
+            "selectedOption": { "type": "string" },
+            "isCorrect": { "type": "boolean" },
+            "answeredAt": { "type": "string" }
+          }
+        },
+        "flags": {
+          "title": "Flag",
+          "description": "Flagged questions",
+          "properties": {
+            "questionId": { "type": "string" },
+            "flaggedAt": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

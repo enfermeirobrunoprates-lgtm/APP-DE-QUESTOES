@@ -1,0 +1,6 @@
+{
+  "name": "StudyForge — Cadernos de Questões com IA",
+  "description": "Anexe PDFs, fotos ou textos. A IA organiza em cadernos interativos de questões, resolve, corrige e fornece explicações fundamentadas com fontes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
