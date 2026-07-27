@@ -11,9 +11,9 @@ export function parseQuestionsFromText(rawText: string): DraftQuestion[] {
 
   const cleanedInput = rawText.replace(/\r\n/g, '\n').trim();
 
-  // Regex to detect question start markers at line boundaries:
-  // Examples: "1.", "01)", "2 -", "Questão 1", "QUESTÃO 05:", "Q1."
-  const questionMarkerRegex = /(?:^|\n)\s*(?:quest[ãa]o\s+|q\.\s*)?0*(\d{1,3})\s*[\.\)\-–:]\s+/gim;
+  // Regex to detect question start markers at line boundaries or after newlines/spaces:
+  // Examples: "1.", "01)", "2 -", "Questão 1", "42 Um hospital", "43 Paciente"
+  const questionMarkerRegex = /(?:^|\n)\s*(?:quest[ãa]o\s+|q\.\s*)?0*(\d{1,3})(?:\s*[\.\)\-–:]\s+|\s+(?=[A-Z0-9ÁÉÍÓÚÂÊÔÃÕÇ]))/gim;
 
   const matches: { index: number; length: number; numStr: string }[] = [];
   let match: RegExpExecArray | null;
@@ -81,8 +81,36 @@ export function parseQuestionsFromText(rawText: string): DraftQuestion[] {
         }
       }
     } else {
-      // No option lines found in block: treat whole block as stem
-      rawStemLines = lines;
+      // Check if options are inline in the block text (e.g. "(A) Option (B) Option (C)...")
+      const inlineOptRegex = /(?:^|\s)\(?([A-Ea-e])\)[\.\)\-–:]?\s+/g;
+      const inlineMatches: { index: number; label: string }[] = [];
+      let inlineMatch: RegExpExecArray | null;
+
+      while ((inlineMatch = inlineOptRegex.exec(block)) !== null) {
+        inlineMatches.push({
+          index: inlineMatch.index,
+          label: inlineMatch[1].toUpperCase(),
+        });
+      }
+
+      if (inlineMatches.length >= 2) {
+        const stemCutoff = inlineMatches[0].index;
+        rawStemLines = [block.slice(0, stemCutoff).trim()];
+
+        for (let i = 0; i < inlineMatches.length; i++) {
+          const start = inlineMatches[i].index;
+          const end = i + 1 < inlineMatches.length ? inlineMatches[i + 1].index : block.length;
+          const optStr = block.slice(start, end).trim();
+          const cleanOptText = optStr.replace(/^\(?([A-Ea-e])\)[\.\)\-–:]?\s+/, '').trim();
+          rawOptions.push({
+            label: inlineMatches[i].label,
+            text: cleanOptText,
+          });
+        }
+      } else {
+        // No option lines or inline options found in block: treat whole block as stem
+        rawStemLines = lines;
+      }
     }
 
     // Join stem lines and clean up leading question numbers/markers
