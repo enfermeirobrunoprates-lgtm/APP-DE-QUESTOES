@@ -6,3 +6,19 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Firebase local applet configs
+firebase-applet-config.json
+firebase_applet_config.xml
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.suo
+*.ntvsopt
+*.njsproj
+*.sln
+*.swp
+
+# Vite / Temp
+.vite/
